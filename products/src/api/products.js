@@ -1,9 +1,13 @@
 const ProductService = require("../services/product-service");
 // const CustomerService = require("../services/customer-service");
-const { PublishCustomerEvent, PublishShoppingEvent } = require("../utils");
+// const { PublishCustomerEvent, PublishShoppingEvent } = require("../utils");
+const { PublishMessage } = require("../utils");
 const UserAuth = require("./middlewares/auth");
 
-module.exports = (app) => {
+const dotENV = require("dotenv");
+dotENV.config();
+
+module.exports = (app, channel) => {
   const service = new ProductService();
   //   const customerService = new CustomerService();
 
@@ -71,7 +75,13 @@ module.exports = (app) => {
         "ADD_TO_WISHLIST"
       );
 
-      PublishCustomerEvent(data);
+      // PublishCustomerEvent(data);
+      PublishMessage(
+        channel,
+        process.env.CUSTOMER_BINDING_KEY,
+        JSON.stringify(data)
+      );
+
       //   const product = await service.GetProductById(req.body._id);
       //   const wishList = await customerService.AddToWishlist(_id, product);
       return res.status(200).json(data.data.product);
@@ -89,7 +99,12 @@ module.exports = (app) => {
         "REMOVE_FROM_WISHLIST"
       );
 
-      PublishCustomerEvent(data);
+      // PublishCustomerEvent(data);
+      PublishMessage(
+        channel,
+        process.env.CUSTOMER_BINDING_KEY,
+        JSON.stringify(data)
+      );
 
       return res.status(200).json(data.data.product);
     } catch (err) {
@@ -110,8 +125,18 @@ module.exports = (app) => {
         "ADD_TO_CART"
       );
 
-      PublishCustomerEvent(data);
-      PublishShoppingEvent(data);
+      // PublishCustomerEvent(data);
+      PublishMessage(
+        channel,
+        process.env.CUSTOMER_BINDING_KEY,
+        JSON.stringify(data)
+      );
+      // PublishShoppingEvent(data);
+      PublishMessage(
+        channel,
+        process.env.SHOPPING_BINDING_KEY,
+        JSON.stringify(data)
+      );
 
       const response = {
         product: data.data.product,
@@ -135,8 +160,18 @@ module.exports = (app) => {
         "REMOVE_FROM_CART"
       );
 
-      PublishCustomerEvent(data);
-      PublishShoppingEvent(data);
+      // PublishCustomerEvent(data);
+      PublishMessage(
+        channel,
+        process.env.CUSTOMER_BINDING_KEY,
+        JSON.stringify(data)
+      );
+      // PublishShoppingEvent(data);
+      PublishMessage(
+        channel,
+        process.env.SHOPPING_BINDING_KEY,
+        JSON.stringify(data)
+      );
 
       const response = {
         product: data.data.product,

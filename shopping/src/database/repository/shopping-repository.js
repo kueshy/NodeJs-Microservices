@@ -74,11 +74,12 @@ class ShoppingRepository {
         });
       }
     } catch (error) {
-      throw APIError(
-        "API Error",
-        STATUS_CODES.INTERNAL_ERROR,
-        "Unable to create customer"
-      );
+      // throw APIError(
+      //   "API Error",
+      //   STATUS_CODES.INTERNAL_ERROR,
+      //   "Unable to create customer"
+      // );
+      console.log(error);
     }
   }
 

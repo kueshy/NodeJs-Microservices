@@ -1,11 +1,16 @@
 const ShoppingService = require("../services/shopping-service");
-const { PublishCustomerEvent } = require("../utils");
+// const { PublishCustomerEvent } = require("../utils");
+const { SubscribeMessage, PublishMessage } = require("../utils");
 // const UserService = require('../services/customer-service');
 const UserAuth = require("./middlewares/auth");
 
-module.exports = (app) => {
+const dotenv = require("dotenv");
+dotenv.config();
+
+module.exports = (app, channel) => {
   const service = new ShoppingService();
   // const userService = new UserService();
+  SubscribeMessage(channel, service);
 
   app.post("/order", UserAuth, async (req, res, next) => {
     const { _id } = req.user;
@@ -16,7 +21,12 @@ module.exports = (app) => {
 
       const payload = await service.GetOrderPayload(_id, data, "CREATE_ORDER");
 
-      PublishCustomerEvent(payload);
+      // PublishCustomerEvent(payload);
+      PublishMessage(
+        channel,
+        process.env.CUSTOMER_BINDING_KEY,
+        JSON.stringify(payload)
+      );
 
       return res.status(200).json(data);
     } catch (err) {

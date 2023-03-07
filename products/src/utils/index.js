@@ -1,6 +1,7 @@
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const axios = require("axios");
+
+const amqplib = require("amqplib");
 
 const { APP_SECRET } = require("../config");
 const dotENV = require("dotenv");
@@ -58,12 +59,53 @@ module.exports.FormateData = (data) => {
   }
 };
 
-module.exports.PublishCustomerEvent = async (payload) => {
-  // Perform some operations
-  axios.post("http://localhost:8080/customers/app-events", { payload });
+// module.exports.PublishCustomerEvent = async (payload) => {
+//   // Perform some operations
+//   axios.post("http://localhost:8080/customers/app-events", { payload });
+// };
+
+// module.exports.PublishShoppingEvent = async (payload) => {
+//   //
+//   axios.post("http://localhost:8080/shopping/app-events", { payload });
+// };
+
+// ====================== Message broker =====================
+
+// Create channel
+module.exports.CreateChannel = async () => {
+  try {
+    const connection = await amqplib.connect(process.env.MESSAGE_QUEUE_URL);
+    const channel = await connection.createChannel();
+    await channel.assertExchange(process.env.EXCHANGE_NAME, "direct", false);
+    return channel;
+  } catch (error) {
+    throw error;
+  }
 };
 
-module.exports.PublishShoppingEvent = async (payload) => {
-  //
-  axios.post("http://localhost:8080/shopping/app-events", { payload });
+// Publish messages
+module.exports.PublishMessage = async (channel, binding_key, message) => {
+  try {
+    await channel.publish(
+      process.env.EXCHANGE_NAME,
+      binding_key,
+      Buffer.from(message)
+    );
+    console.log("Message has been sent" + message);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Subscribe messages
+module.exports.SubscribeMessage = async (channel, service, binding_key) => {
+  const appQueue = await channel.assertQueue("QUEUE_NAME");
+
+  channel.bindQueue(appQueue.queue, EXCHANGE_NAME, binding_key);
+
+  channel.consume(appQueue.queue, (data) => {
+    console.log("Received data");
+    console.log(data.content.toString());
+    console.log(data);
+  });
 };

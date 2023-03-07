@@ -1,6 +1,7 @@
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const axios = require("axios");
+
+const amqplib = require("amqplib");
 
 const { APP_SECRET } = require("../config");
 const dotENV = require("dotenv");
@@ -58,12 +59,58 @@ module.exports.FormateData = (data) => {
   }
 };
 
-module.exports.PublishCustomerEvent = async (payload) => {
-  // Perform some operations
-  axios.post("http://localhost:8080/customers/app-events", { payload });
-};
+// module.exports.PublishCustomerEvent = async (payload) => {
+//   // Perform some operations
+//   axios.post("http://localhost:8080/customers/app-events", { payload });
+// };
 
 // module.exports.PublishShoppingEvent = async () => {
 //   //
 //   axios.post("http://localhost:8080/shopping/app-events", { payload });
 // };
+
+// ====================== Message broker =====================
+
+// Create channel
+module.exports.CreateChannel = async () => {
+  try {
+    const connection = await amqplib.connect(process.env.MESSAGE_QUEUE_URL);
+    const channel = await connection.createChannel();
+    await channel.assertExchange(process.env.EXCHANGE_NAME, "direct", false);
+    return channel;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Publish messages
+module.exports.PublishMessage = async (channel, binding_key, message) => {
+  try {
+    await channel.publish(
+      process.env.EXCHANGE_NAME,
+      binding_key,
+      Buffer.from(message)
+    );
+    console.log("Message has been sent" + message);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Subscribe messages
+module.exports.SubscribeMessage = async (channel, service) => {
+  const appQueue = await channel.assertQueue(process.env.QUEUE_NAME);
+
+  channel.bindQueue(
+    appQueue.queue,
+    process.env.EXCHANGE_NAME,
+    process.env.SHOPPING_BINDING_KEY
+  );
+
+  channel.consume(appQueue.queue, (data) => {
+    console.log("Received data in shopping service");
+    console.log(data.content.toString());
+    service.SubscribeEvents(data.content.toString());
+    console.log(data);
+  });
+};
