@@ -4,13 +4,15 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon src/index.js",
-    "dev": "NODE_DEV=dev nodemon index.js"
+    "dev": "NODE_DEV=dev nodemon index.js",
+    "test":"jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "jest": "^29.5.0",
     "mongoose": "^6.9.2",
     "nodemon": "^2.0.20"
   },
